@@ -5,8 +5,13 @@
 </template>
 
 <script>
+import ResourceList from './components/list'
+
 export default {
-  name: 'ResourceIndex'
+  name: 'ResourceIndex',
+  components: {
+    ResourceList
+  }
 }
 </script>
 
