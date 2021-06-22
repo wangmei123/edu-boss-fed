@@ -1,43 +1,154 @@
+// user/components/list.vue
 <template>
-  <div class="user-list">
-    <el-card>
-      <el-table :data="tableData" style="width: 100%">
-        <el-table-column prop="date" label="日期" width="180">
-        </el-table-column>
-        <el-table-column prop="name" label="姓名" width="180">
-        </el-table-column>
-        <el-table-column prop="address" label="地址"> </el-table-column>
-      </el-table>
-    </el-card>
-  </div>
+  <el-card>
+    <div slot="header">
+      <el-form
+      :inline="true"
+      :model="filterParams"
+      ref="filter-form">
+        <el-form-item label="手机号" prop="phone">
+          <el-input v-model="filterParams.phone"></el-input>
+        </el-form-item>
+        <el-form-item label="注册时间" prop="rangeDate">
+          <el-date-picker
+            v-model="filterParams.rangeDate"
+            type="datetimerange"
+            range-separator="至"
+            start-placeholder="开始时间"
+            end-placeholder="结束时间"
+            value-format="yyyy-MM-dd"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button
+            :disabled="isLoading"
+            @click="handleReset"
+          >重置</el-button>
+          <el-button
+            type="primary"
+            @click="handleQuery"
+            :disabled="isLoading"
+          >查询</el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+    <el-table
+      :data="users"
+      style="width: 100%"
+      v-loading="isLoading"
+    >
+      <el-table-column
+        prop="id"
+        label="用户ID"
+        width="150">
+      </el-table-column>
+      <el-table-column
+        prop="name"
+        label="头像"
+        width="100">
+        <template slot-scope="scope">
+          <img width="30px" :src="scope.row.portrait || 'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png'">
+        </template>
+      </el-table-column>
+      <el-table-column
+        prop="name"
+        label="用户名">
+      </el-table-column>
+      <el-table-column
+        prop="phone"
+        label="手机号">
+      </el-table-column>
+      <el-table-column
+        prop="createTime"
+        label="注册时间">
+        <!-- 用户状态操作（服务端没有开放权限，只能演示） -->
+      </el-table-column>
+      <el-table-column
+        prop="name"
+        label="状态"
+        width="80">
+        <template slot-scope="scope">
+          <el-switch
+            v-model="scope.row.status"
+            active-value="ENABLE"
+            inactive-value="DISABLE"
+            active-color="#13ce66"
+            inactive-color="#ff4949"
+            @change="handleForbidUser(scope.row)"
+          >
+          </el-switch>
+        </template>
+      </el-table-column>
+      <el-table-column
+        prop="address"
+        label="操作">
+        <template slot-scope="scope">
+          <el-button
+            type="text"
+            @click="handleSelectRole(scope.row)"
+          >分配角色</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+  </el-card>
 </template>
 
 <script>
+import { getUserPages, forbidUser } from '@/services/user'
+
 export default {
   name: 'UserList',
   data () {
     return {
-      tableData: [{
-        date: '2016-05-02',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1518 弄'
-      }, {
-        date: '2016-05-04',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1517 弄'
-      }, {
-        date: '2016-05-01',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1519 弄'
-      }, {
-        date: '2016-05-03',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1516 弄'
-      }]
+      users: [],
+      filterParams: {
+        currentPage: 1,
+        pageSize: 100,
+        phone: '',
+        startCreateTime: '',
+        endCreateTime: '',
+        rangeDate: []
+      },
+      isLoading: false
+    }
+  },
+  created () {
+    this.loadUsers()
+  },
+
+  methods: {
+    // 加载用户
+    async loadUsers () {
+      this.isLoading = true
+      const { rangeDate } = this.filterParams
+      if (rangeDate && rangeDate.length) {
+        this.filterParams.startCreateTime = rangeDate[0]
+        this.filterParams.endCreateTime = rangeDate[1]
+      } else {
+        this.filterParams.startCreateTime = ''
+        this.filterParams.endCreateTime = ''
+      }
+      const { data } = await getUserPages(this.filterParams)
+      this.users = data.data.records
+      this.isLoading = false
+    },
+    async handleForbidUser (user) {
+      const { data } = await forbidUser(user.id)
+      console.log(data)
+    },
+    handleQuery () {
+      this.filterParams.currentPage = 1
+      this.loadUsers()
+    },
+    handleReset () {
+      this.$refs['filter-form'].resetFields()
+      this.loadUsers()
+    },
+    // 点击用户的分配角色按钮
+    handleSelectRole () {
     }
   }
 }
 </script>
 
-<style>
-</style>
+<style lang="scss" scoped></style>
