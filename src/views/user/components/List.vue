@@ -95,19 +95,19 @@
       title="提示"
       :visible.sync="dialogVisible"
       width="30%"
-      :before-close="handleClose">
+      >
       <!-- 下拉菜单 -->
-       <el-select v-model="value1" multiple placeholder="请选择">
+       <el-select v-model="roleIdList" multiple placeholder="请选择">
           <el-option
-            v-for="item in options"
+            v-for="item in roles"
             :key="item.value"
-            :label="item.label"
-            :value="item.value">
+            :label="item.name"
+            :value="item.id">
           </el-option>
         </el-select>
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+        <el-button type="primary" @click="handleAllRole">确 定</el-button>
       </span>
     </el-dialog>
   </el-card>
@@ -115,6 +115,7 @@
 
 <script>
 import { getUserPages, forbidUser } from '@/services/user'
+import { getAllRoles, allocateUserRoles, getUserRoles } from '@/services/role'
 
 export default {
   name: 'UserList',
@@ -131,23 +132,11 @@ export default {
       },
       isLoading: false,
       dialogVisible: false,
-      options: [{
-        value: '选项1',
-        label: '黄金糕'
-      }, {
-        value: '选项2',
-        label: '双皮奶'
-      }, {
-        value: '选项3',
-        label: '蚵仔煎'
-      }, {
-        value: '选项4',
-        label: '龙须面'
-      }, {
-        value: '选项5',
-        label: '北京烤鸭'
-      }],
-      value1: []
+      // 下拉菜单数据
+      roles: [],
+      // 选中选项的id数组
+      roleIdList: [],
+      currentRoleId: null
     }
   },
   created () {
@@ -183,8 +172,33 @@ export default {
       this.loadUsers()
     },
     // 点击用户的分配角色按钮
-    handleSelectRole () {
+    async handleSelectRole (row) {
+      this.currentRoleId = row.id
       this.dialogVisible = true
+      const { data } = await getAllRoles()
+      // console.log('data', data)
+      if (data.code === '000000') {
+        this.roles = data.data
+      }
+      // 请求当前用户的角色信息
+      const { data: data1 } = await getUserRoles(row.id)
+      // console.log('data1', data1.data)
+      if (data1.code === '000000') {
+        this.roleIdList = data1.data.map(item => item.id)
+      }
+    },
+    // 点击给用户分配角色
+    async handleAllRole (userData) {
+      this.dialogVisible = false
+      const { data } = await allocateUserRoles({
+        userId: this.currentRoleId,
+        roleIdList: this.roleIdList
+      })
+      // console.log('data', data)
+      if (data.code === '000000') {
+        this.$message.success('分配角色成功')
+        this.dialogVisible = false
+      }
     }
   }
 }

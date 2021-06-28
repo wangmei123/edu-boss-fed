@@ -92,6 +92,11 @@ const routes = [
         name: 'alloc-menu',
         component: () => import(/* webpackChunkName: 'alloc-menu' */'@/views/role/alloc-menu'),
         props: true // 实现路由与组件解耦
+      },
+      {
+        path: '/course/create',
+        name: 'course-create',
+        component: () => import(/* webpackChunkName: 'course-create' */ '@/views/course/create.vue')
       }
     ]
   },

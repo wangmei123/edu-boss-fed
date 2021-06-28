@@ -1,10 +1,18 @@
+// course/index.vue 课程组件
 <template>
-  <div class="course">广告位管理</div>
+  <div class="course">
+    <course-list></course-list>
+  </div>
 </template>
 
 <script>
+import CourseList from './components/list.vue'
+
 export default {
-  name: 'Course'
+  name: 'CourseIndex',
+  components: {
+    CourseList
+  }
 }
 </script>
 
