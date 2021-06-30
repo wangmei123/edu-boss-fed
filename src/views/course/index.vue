@@ -1,4 +1,3 @@
-// course/index.vue 课程组件
 <template>
   <div class="course">
     <course-list></course-list>
