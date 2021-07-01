@@ -1,8 +1,17 @@
 <template>
   <div class="course-image">
-     <el-form-item label="课程封面">
+     <el-form-item :label="label">
+       <!-- 上传进度 -->
+        <el-progress
+        type="circle"
+        :percentage="precent"
+        :width="178"
+        v-if="isUploading"
+        ></el-progress>
          <!-- 自定义上传图片 -->
+         <!-- :on-progress="handleProgress" -->
         <el-upload
+            v-else
             class="avatar-uploader"
             action="https://jsonplaceholder.typicode.com/posts/"
             :show-file-list="false"
@@ -25,25 +34,45 @@ export default {
   props: {
     value: {
       type: String
+    },
+    label: {
+      type: String
+    },
+    // 设置图片限制大小
+    limit: {
+      type: Number,
+      default: 2
     }
   },
   data () {
     return {
-      imageUrl: ''
+      // 用于保存上传状态
+      isUploading: false,
+      precent: 0
     }
   },
   methods: {
+    // handleProgress (event, file) {
+    //   console.log('file', event, file) // 打印没有内容,因为自定义上传事件覆盖了默认的上传事件
+    // },
     // Upload 组件提供了 http-request 属性⽤于覆盖默认的上传⾏为，⽤于实现⾃定义上传。
     async handleUpload (options) {
+      this.isUploading = true
       // console.log('options', options)
       const fd = new FormData()
       fd.append('file', options.file)
-      const { data } = await upload(fd)
+      const { data } = await upload(fd, event => {
+        // console.log(event.total, event.loaded)
+        this.precent = Math.floor(event.loaded / event.total * 100)
+      })
       // console.log('data', data)
       if (data.code === '000000') {
         // this.courseList.courseListImg = data.data.name
-        // 子传父
+        // 子传父  vm.$emit( event, arg ) //触发当前实例上的事件
         this.$emit('input', data.data.name)
+        this.isUploading = false
+        // 上传成功后将进度归0避免下次上传时进度条回退现象
+        this.precent = 0
         this.$message.success('上传成功')
       }
     },

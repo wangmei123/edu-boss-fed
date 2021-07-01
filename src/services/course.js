@@ -34,6 +34,11 @@ export const upload = (data, onUploadProgress) => {
   return request({
     method: 'POST',
     url: '/boss/course/upload',
-    data
+    data,
+    // 上传进度监测
+    onUploadProgress
+    // onUploadProgress (event) {
+    //   // console.log('event', event.total, event.loaded)
+    // }
   })
 }

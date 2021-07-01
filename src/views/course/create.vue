@@ -77,30 +77,40 @@
           </el-form-item>
         </div>
         <div v-show="activeStep === 1">
-          <course-image v-model="courseList.courseListImg"></course-image>
-          <course-image v-model="courseList.courseImgUrl"></course-image>
+          <course-image v-model="courseList.courseListImg" label="课程封面" :limit="3"></course-image>
+          <course-image v-model="courseList.courseImgUrl" label="解锁封面"></course-image>
         </div>
         <div v-show="activeStep === 2">
           <!-- 销售信息 -->
           <el-form-item label="售卖价格">
-            <el-input v-model="input2">
+            <el-input
+            type="number"
+            :min="0"
+            v-model="courseList.discounts"
+            >
               <template slot="append">元</template>
             </el-input>
           </el-form-item>
           <el-form-item label="商品原价">
-            <el-input v-model="input2">
+            <el-input
+            type="number"
+            :min="0"
+            v-model="courseList.price">
               <template slot="append">元</template>
             </el-input>
           </el-form-item>
           <el-form-item label="销量">
-            <el-input v-model="input2">
+            <el-input
+            type="number"
+            :min="0"
+            v-model="courseList.sales">
               <template slot="append">单</template>
             </el-input>
           </el-form-item>
           <el-form-item label="活动标签">
             <el-input
               type="text"
-              v-model="text"
+              v-model="courseList.discountsTag"
               maxlength="4"
               show-word-limit
             >
@@ -111,42 +121,67 @@
           <!-- 秒杀信息 -->
           <el-form-item label="限时秒杀开关" label-width="120px">
             <el-switch
-              v-model="isSeckill"
+              v-model="courseList.activityCourse"
               active-color="#13ce66"
               inactive-color="#ff4949">
             </el-switch>
           </el-form-item>
-          <template v-if="isSeckill === true">
+          <template v-if="courseList.activityCourse === true">
             <el-form-item label="开始时间">
               <el-date-picker
-                v-model="value1"
+                v-model="courseList.activityCourseDTO.beginTime"
                 type="datetime"
                 placeholder="选择日期时间">
               </el-date-picker>
             </el-form-item>
             <el-form-item label="结束日期">
               <el-date-picker
-                v-model="value1"
+                v-model="courseList.activityCourseDTO.endTime"
                 type="datetime"
                 placeholder="选择日期时间">
               </el-date-picker>
             </el-form-item>
             <el-form-item label="秒杀价">
-            <el-input v-model="input2">
+            <el-input
+              type="number"
+              :min="0"
+              v-model="courseList.activityCourseDTO.amount">
               <template slot="append">元</template>
             </el-input>
           </el-form-item>
           <el-form-item label="秒杀库存">
-            <el-input v-model="input2">
+            <el-input
+              type="number"
+              :min="0"
+              v-model="courseList.activityCourseDTO.stock">
               <template slot="append">个</template>
             </el-input>
           </el-form-item>
           </template>
         </div>
         <div v-show="activeStep === 4">
-          课程详情
+          <!-- 课程详情 -->
+          <el-form-item label="课程详情">
+            <!-- <el-input
+              type="textarea"
+              v-model="courseList.courseDescriptionMarkDown">
+              <template slot="append">个</template>
+            </el-input> -->
+            <!-- <div ref="editor"></div> -->
+            <text-editor v-model="courseList.courseDescriptionMarkDown"></text-editor>
+          </el-form-item>
+          <el-form-item label="是否上架">
+            <el-switch
+              v-model="courseList.status"
+              active-color="#13ce66"
+              inactive-color="#ff4949"
+              :active-value="1"
+              :inactive-value="0"
+              >
+            </el-switch>
+          </el-form-item>
           <el-form-item>
-            <el-button type="primary">保存</el-button>
+            <el-button type="primary" @click="handelSave">保存</el-button>
           </el-form-item>
         </div>
         <!-- 下一步按钮 -->
@@ -159,12 +194,16 @@
 </template>
 
 <script>
-// import { saveOrUpdateCourse, upload} from '@/services/course'
+import { saveOrUpdateCourse } from '@/services/course'
 import CourseImage from './components/course-image'
+import TextEditor from '@/components/TextEditor'
+// import E from 'wangeditor'
+
 export default {
   name: 'CourseCreate',
   components: {
-    CourseImage
+    CourseImage,
+    TextEditor
   },
   data () {
     return {
@@ -178,19 +217,21 @@ export default {
         { id: 5, title: '课程详情', icon: 'el-icon-picture' }
       ],
       imageUrl: '',
-      isSeckill: false,
+      // isSeckill: false,
+      // 添加课程的数据信息  将数据中与id相关的数据去除，是编辑功能使用的
       courseList: {
-        id: 0,
+        // id: 0,
         courseName: '',
         brief: '',
         teacherDTO: {
-          id: 0,
-          courseId: 0,
+          // id: 0,
+          // courseId: 0,
           teacherName: '',
           teacherHeadPicUrl: '',
           position: '',
           description: ''
         },
+        // 课程详情内容
         courseDescriptionMarkDown: '',
         price: 0,
         discounts: 0,
@@ -205,10 +246,11 @@ export default {
         previewSecondField: '',
         status: 0,
         sales: 0,
-        activityCourse: true,
+        // 参与秒杀活动的课程
+        activityCourse: false,
         activityCourseDTO: {
-          id: 0,
-          courseId: 0,
+          // id: 0,
+          // courseId: 0,
           beginTime: '',
           endTime: '',
           amount: 0,
@@ -219,6 +261,20 @@ export default {
     }
   },
   methods: {
+    // initEditor () {
+    //   const editor = new E(this.$refs.editor)
+    //   editor.create()
+    // },
+    async handelSave () {
+      const { data } = await saveOrUpdateCourse(this.courseList)
+      // console.log(data)
+      if (data.code === '000000') {
+        this.$message.success('添加课程成功')
+        this.$router.push({
+          name: 'course'
+        })
+      }
+    }
   }
 }
 </script>
