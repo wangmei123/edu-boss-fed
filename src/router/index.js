@@ -109,6 +109,12 @@ const routes = [
         name: 'course-section',
         component: () => import(/* webpackChunkName: 'course-section' */ '@/views/course/section.vue'),
         props: true // 实现路由与组件解耦
+      },
+      {
+        path: '/course/:courseId/video',
+        name: 'course-video',
+        component: () => import(/* webpackChunkName: 'course-video' */ '@/views/course/video.vue'),
+        props: true // 实现路由与组件解耦
       }
     ]
   },

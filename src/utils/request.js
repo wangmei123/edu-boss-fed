@@ -79,19 +79,20 @@ axios.interceptors.response.use(function (response) {
       // 1、无Token信息
       if (!store.state.user) {
         // 1、如果有，则将当前请求挂起，等token刷新完毕后再重发
-        if (isRefreshing) {
-          // 检测是否已经存在了正在刷新 Token 的请求
-          return requests.push(() => {
-            // 当前函数调用后，会自动发送本次失败的请求
-            request(error.config)
-          })
-        }
-        // 2、如果没有，则更新isRefreshing并发送请求，继续执行后续操作
-        isRefreshing = true
         redirectLogin()
         // 阻止后续操作，向下抛出错误对象
         return Promise.reject(error)
       }
+      // 检测是否已经存在了正在刷新 Token 的请求
+      if (isRefreshing) {
+        // 将当前失败的请求，存储到请求列表中
+        return requests.push(() => {
+          // 当前函数调用后，会自动发送本次失败的请求
+          request(error.config)
+        })
+      }
+      // 2、如果没有，则更新isRefreshing并发送请求，继续执行后续操作
+      isRefreshing = true
       // 2、Token无效（错误Token,过期 Token）请求刷新Token接口,获取新的access_token
       return request({
         method: 'POST',
